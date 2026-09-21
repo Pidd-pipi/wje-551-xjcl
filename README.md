@@ -7,7 +7,7 @@
 - 供应链总览仪表盘：在途、待签收、低库存、活跃供应商、状态分布与预警列表。
 - 供应商管理：搜索筛选、审核、评分、详情与关联运单。
 - 库存管理：仓库维度库存查询、入库、出库、调拨、盘点和安全库存预警。
-- 运单追踪：运单列表、状态流转、发货、在途、签收自动入库、异常和取消。
+- 运单追踪：运单列表、状态流转、发货、在途、**分批收货差异闭环**（按明细录入本次实收与收货批次号，未收保留待收，累计收齐才签收；超收整单拒绝、批次号防重复入库）、签收自动入库、异常和取消。
 - 横切能力：JWT 登录、角色权限、前端路由守卫、按钮级 `v-permission`、统一异常处理、审计日志。
 
 ## 快速启动
@@ -44,6 +44,19 @@ npm run dev
 
 前端本地开发通过 Vite proxy 将 `/api` 转发到 `http://localhost:38301`。
 
+## 分批收货差异闭环
+
+仓库在运单详情按明细录入本次实收数量与收货批次号（`POST /api/v1/shipments/:id/receive-batch`）：
+
+- 未收部分保留待收，运单保持「运输中」，详情页展示待收汇总（原始总量 / 累计实收 / 待收 / 待收明细条数）；
+- 各 SKU 累计实收达到原始数量后才签收为「已签收」，库存按每批净增更新；
+- 任一 SKU 累计实收超过原始数量时整单拒绝，全部校验先于库存变动，拒绝即库存不变、状态不变；
+- 同一收货批次号不能重复提交（库内 `(shipment_id, batch_no)` 唯一约束兜底）；
+- 审计记录包含收货批次号、逐 SKU 本次实收 / 累计实收 / 待收 / 差异，以及对应库存净增；
+- 运单列表的「签收」按钮保留一次性全部签收语义（自动生成批次号）。
+
+相关表：`shipment_items.received_quantity`（累计实收）、`shipment_receivings`（收货批次）、`shipment_receiving_lines`（批次明细与差异），见 `database/migrations/002_shipment_batch_receiving.sql`。
+
 ## 技术栈
 
 | 层级 | 技术 |
@@ -74,6 +87,7 @@ npm run dev
 │   └── src/constants/
 ├── database/
 │   ├── migrations/001_initial.sql
+│   ├── migrations/002_shipment_batch_receiving.sql
 │   └── seeds/001_initial_data.sql
 ├── docker-compose.yml
 ├── .env

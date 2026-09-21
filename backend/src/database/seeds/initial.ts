@@ -1,7 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import { InventoryAlertLevel, ShipmentStatus, SupplierStatus } from '../../constants/enums.js';
 import { PERMISSIONS } from '../../constants/permissions.js';
-import type { AuditLog, Inventory, Shipment, Supplier, User, Warehouse } from '../../types/index.js';
+import type { AuditLog, Inventory, ReceivingLine, ReceivingRecord, Shipment, ShipmentItem, Supplier, User, Warehouse } from '../../types/index.js';
 
 const now = () => new Date().toISOString();
 
@@ -84,6 +84,35 @@ export const shipments: Shipment[] = Array.from({ length: 15 }, (_, index) => {
   const status = statuses[index % statuses.length];
   const id = `ship-${index + 1}`;
   const createdAt = new Date(Date.now() - index * 86400000).toISOString();
+  // ship-9 为运输中的部分收货示例（首条明细已收一半）
+  const partialReceived = id === 'ship-9';
+  const items: ShipmentItem[] = [
+    { id: uuid(), shipmentId: id, skuId: `SKU-${String(1000 + (index % 10))}`, skuName: '轴承组件', quantity: 10 + index, receivedQuantity: status === ShipmentStatus.DELIVERED ? 10 + index : partialReceived ? 5 : 0 },
+    { id: uuid(), shipmentId: id, skuId: `SKU-${String(1010 + (index % 10))}`, skuName: '包装纸箱', quantity: 20 + index, receivedQuantity: status === ShipmentStatus.DELIVERED ? 20 + index : 0 },
+  ];
+  const buildLine = (item: ShipmentItem, receivedThisTime: number): ReceivingLine => {
+    const receivedTotal = Math.min(item.receivedQuantity, item.quantity);
+    return {
+      itemId: item.id,
+      skuId: item.skuId,
+      skuName: item.skuName,
+      orderedQuantity: item.quantity,
+      receivedQuantity: receivedThisTime,
+      receivedQuantityTotal: receivedTotal,
+      beforeQuantity: receivedTotal - receivedThisTime,
+      pendingQuantity: item.quantity - receivedTotal,
+      diff: receivedTotal - item.quantity,
+    };
+  };
+  let receivings: ReceivingRecord[] = [];
+  if (status === ShipmentStatus.DELIVERED) {
+    const lines = items.map((item) => buildLine(item, item.quantity));
+    receivings = [{ id: uuid(), shipmentId: id, batchNo: `RCV-SEED-${String(index + 1).padStart(2, '0')}`, lines, totalReceivedQuantity: items.reduce((sum, item) => sum + item.quantity, 0), completed: true, operator: '系统种子', createdAt: now() }];
+  } else if (partialReceived) {
+    const receivedThisTime = 5;
+    const lines = [buildLine(items[0], receivedThisTime), buildLine(items[1], 0)];
+    receivings = [{ id: uuid(), shipmentId: id, batchNo: 'RCV-SEED-09-P1', lines, totalReceivedQuantity: receivedThisTime, completed: false, operator: '系统种子', createdAt: now() }];
+  }
   return {
     id,
     orderNo: `SHIP-202606${String(1 + index).padStart(2, '0')}-${String(index + 1).padStart(4, '0')}`,
@@ -95,10 +124,8 @@ export const shipments: Shipment[] = Array.from({ length: 15 }, (_, index) => {
     estimatedArrival: new Date(Date.now() + (index + 1) * 86400000).toISOString(),
     actualArrival: status === ShipmentStatus.DELIVERED ? now() : undefined,
     remark: status === ShipmentStatus.EXCEPTION ? '承运方反馈中转延误' : '',
-    items: [
-      { id: uuid(), shipmentId: id, skuId: `SKU-${String(1000 + (index % 10))}`, skuName: '轴承组件', quantity: 10 + index },
-      { id: uuid(), shipmentId: id, skuId: `SKU-${String(1010 + (index % 10))}`, skuName: '包装纸箱', quantity: 20 + index },
-    ],
+    items,
+    receivings,
     timeline: [{ id: uuid(), status, operator: '系统种子', note: '初始化运单状态', createdAt }],
     createdAt,
     updatedAt: createdAt,

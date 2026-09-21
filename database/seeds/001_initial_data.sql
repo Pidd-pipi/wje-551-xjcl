@@ -30,7 +30,17 @@ INSERT INTO shipments (id, order_no, supplier_id, warehouse_id, status, tracking
 ('ship-3', 'SHIP-20260603-0003', 'sup-3', 'wh-north', 'IN_TRANSIT', 'TRK1003', '京东物流', DATE_ADD(NOW(), INTERVAL 1 DAY), NULL, '', NOW(), NOW()),
 ('ship-4', 'SHIP-20260604-0004', 'sup-1', 'wh-east', 'DELIVERED', 'TRK1004', '德邦快运', NOW(), NOW(), '', NOW(), NOW());
 
-INSERT INTO shipment_items (id, shipment_id, sku_id, sku_name, quantity) VALUES
-('si-1', 'ship-1', 'SKU-1000', '轴承组件', 20),
-('si-2', 'ship-2', 'SKU-1001', '包装纸箱', 60),
-('si-3', 'ship-3', 'SKU-1002', '温控芯片', 15);
+INSERT INTO shipment_items (id, shipment_id, sku_id, sku_name, quantity, received_quantity) VALUES
+('si-1', 'ship-1', 'SKU-1000', '轴承组件', 20, 0),
+('si-2', 'ship-2', 'SKU-1001', '包装纸箱', 60, 0),
+('si-3', 'ship-3', 'SKU-1002', '温控芯片', 15, 8),
+('si-4', 'ship-4', 'SKU-1003', '伺服电机', 12, 12);
+
+-- ship-3 运输中部分收货示例：本批实收 8，待收 7
+INSERT INTO shipment_receivings (id, shipment_id, batch_no, total_received_quantity, completed, operator, created_at) VALUES
+('rcv-3-1', 'ship-3', 'RCV-SEED-03-P1', 8, 0, '仓库经理', NOW()),
+('rcv-4-1', 'ship-4', 'RCV-SEED-04-01', 12, 1, '仓库经理', NOW());
+
+INSERT INTO shipment_receiving_lines (id, receiving_id, shipment_id, shipment_item_id, sku_id, sku_name, ordered_quantity, received_quantity, received_quantity_total, before_quantity, pending_quantity, diff) VALUES
+('rcl-3-1', 'rcv-3-1', 'ship-3', 'si-3', 'SKU-1002', '温控芯片', 15, 8, 8, 0, 7, -7),
+('rcl-4-1', 'rcv-4-1', 'ship-4', 'si-4', 'SKU-1003', '伺服电机', 12, 12, 12, 0, 0, 0);

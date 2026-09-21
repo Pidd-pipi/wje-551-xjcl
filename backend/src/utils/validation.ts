@@ -11,3 +11,9 @@ export function assertPositiveInteger(value: number, label: string) {
     throw new BusinessException(400, `${label}必须为正整数`);
   }
 }
+
+export function assertNonNegativeInteger(value: number, label: string) {
+  if (!Number.isInteger(value) || value < 0) {
+    throw new BusinessException(400, `${label}必须为非负整数`);
+  }
+}

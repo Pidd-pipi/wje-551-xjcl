@@ -10,6 +10,7 @@ export class ShipmentsController {
   ship(req: Request, res: Response) { res.json(ok(shipmentsService.ship(req.params.id, req.body, resLocals(req).user))); }
   transit(req: Request, res: Response) { res.json(ok(shipmentsService.transit(req.params.id, resLocals(req).user))); }
   receive(req: Request, res: Response) { res.json(ok(shipmentsService.receive(req.params.id, resLocals(req).user))); }
+  receiveBatch(req: Request, res: Response) { res.json(ok(shipmentsService.receiveBatch(req.params.id, req.body, resLocals(req).user))); }
   exception(req: Request, res: Response) { res.json(ok(shipmentsService.exception(req.params.id, req.body.reason, resLocals(req).user))); }
   cancel(req: Request, res: Response) { res.json(ok(shipmentsService.cancel(req.params.id, resLocals(req).user))); }
 }
