@@ -7,8 +7,21 @@
 - 供应链总览仪表盘：在途、待签收、低库存、活跃供应商、状态分布与预警列表。
 - 供应商管理：搜索筛选、审核、评分、详情与关联运单。
 - 库存管理：仓库维度库存查询、入库、出库、调拨、盘点和安全库存预警。
-- 运单追踪：运单列表、状态流转、发货、在途、签收自动入库、异常和取消。
+- 运单追踪：运单列表、状态流转、发货、在途、按明细分批收货（实收数量 + 收货批次号）、未收待收汇总、累计收齐自动签收入库、超收整单拒绝、批次号幂等、异常和取消。
 - 横切能力：JWT 登录、角色权限、前端路由守卫、按钮级 `v-permission`、统一异常处理、审计日志。
+
+## 分批收货差异闭环
+
+仓库在运单详情（运输中的运单）按明细录入**本次实收数量**与**收货批次号**：
+
+- **部分收货**：未收部分保留待收，运单保持 `IN_TRANSIT（运输中）`，详情页展示待收汇总（原始数量 / 累计实收 / 待收数量，逐 SKU 与整单汇总）。
+- **完全收货**：每个 SKU 的累计实收达到原始数量后运单才签收为 `DELIVERED（已签收）`，记录实际签收时间，库存按本次净增数量逐 SKU 入库。
+- **超收整单拒绝**：任一 SKU「累计已收 + 本次实收」超过原始数量时，整批提交被拒绝，**不写入任何库存、不产生批次记录、运单状态不变**（先全量校验后落库）。
+- **批次号幂等**：同一运单下同一收货批次号不能重复提交入库；批次内同一明细不能重复出现。
+- **审计**：每次批次收货记录审计日志，包含收货批次号、逐 SKU 实收数量、批次后差异（待收）与待收汇总；完全收货额外记录签收状态流转。入库审计同时回写批次号与来源运单号。
+
+相关接口：`POST /api/v1/shipments/:id/receive`（body：`{ batchNo, lines: [{ itemId, receivedQuantity }] }`）、`GET /api/v1/shipments/:id/pending-summary`。
+相关表：`shipment_receipts`、`shipment_receipt_items`，`shipment_items.received_quantity`。
 
 ## 快速启动
 
@@ -119,6 +132,8 @@ JWT_EXPIRES_IN=7d
 |------|---------|
 | 后端枚举定义 | backend/src/constants/enums.ts |
 | 后端实体 | backend/src/models/shipment.entity.ts |
+| 后端实体 | backend/src/models/shipment-item.entity.ts |
+| 后端实体 | backend/src/models/shipment-receipt.entity.ts（收货批次） |
 | 后端服务 | backend/src/services/shipments.service.ts |
 | 后端控制器 | backend/src/controllers/shipments.controller.ts |
 | 前端枚举定义 | frontend/src/constants/enums.ts |

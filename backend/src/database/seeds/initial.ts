@@ -84,6 +84,33 @@ export const shipments: Shipment[] = Array.from({ length: 15 }, (_, index) => {
   const status = statuses[index % statuses.length];
   const id = `ship-${index + 1}`;
   const createdAt = new Date(Date.now() - index * 86400000).toISOString();
+  const items = [
+    { id: uuid(), shipmentId: id, skuId: `SKU-${String(1000 + (index % 10))}`, skuName: '轴承组件', quantity: 10 + index, receivedQuantity: status === ShipmentStatus.DELIVERED ? 10 + index : 0 },
+    { id: uuid(), shipmentId: id, skuId: `SKU-${String(1010 + (index % 10))}`, skuName: '包装纸箱', quantity: 20 + index, receivedQuantity: status === ShipmentStatus.DELIVERED ? 20 + index : 0 },
+  ];
+  const receipts: Shipment['receipts'] = status === ShipmentStatus.DELIVERED
+    ? [
+        {
+          id: uuid(),
+          shipmentId: id,
+          batchNo: `BATCH-${String(index + 1).padStart(4, '0')}-INIT`,
+          totalReceivedQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
+          operator: '仓库经理',
+          createdAt: now(),
+          items: items.map((item) => ({
+            id: uuid(),
+            receiptId: '',
+            shipmentItemId: item.id,
+            skuId: item.skuId,
+            skuName: item.skuName,
+            receivedQuantity: item.quantity,
+            diffQuantity: 0,
+            createdAt: now(),
+          })),
+        },
+      ]
+    : [];
+  if (receipts[0]) receipts[0].items.forEach((receiptItem) => { receiptItem.receiptId = receipts[0]!.id; });
   return {
     id,
     orderNo: `SHIP-202606${String(1 + index).padStart(2, '0')}-${String(index + 1).padStart(4, '0')}`,
@@ -95,10 +122,8 @@ export const shipments: Shipment[] = Array.from({ length: 15 }, (_, index) => {
     estimatedArrival: new Date(Date.now() + (index + 1) * 86400000).toISOString(),
     actualArrival: status === ShipmentStatus.DELIVERED ? now() : undefined,
     remark: status === ShipmentStatus.EXCEPTION ? '承运方反馈中转延误' : '',
-    items: [
-      { id: uuid(), shipmentId: id, skuId: `SKU-${String(1000 + (index % 10))}`, skuName: '轴承组件', quantity: 10 + index },
-      { id: uuid(), shipmentId: id, skuId: `SKU-${String(1010 + (index % 10))}`, skuName: '包装纸箱', quantity: 20 + index },
-    ],
+    items,
+    receipts,
     timeline: [{ id: uuid(), status, operator: '系统种子', note: '初始化运单状态', createdAt }],
     createdAt,
     updatedAt: createdAt,

@@ -102,7 +102,33 @@ CREATE TABLE shipment_items (
   sku_id VARCHAR(64) NOT NULL,
   sku_name VARCHAR(128) NOT NULL,
   quantity INT NOT NULL,
+  received_quantity INT NOT NULL DEFAULT 0,
   INDEX idx_shipment_items_shipment_id (shipment_id)
+);
+
+CREATE TABLE shipment_receipts (
+  id VARCHAR(36) PRIMARY KEY,
+  shipment_id VARCHAR(36) NOT NULL,
+  batch_no VARCHAR(64) NOT NULL,
+  total_received_quantity INT NOT NULL DEFAULT 0,
+  operator VARCHAR(64) NOT NULL,
+  created_at DATETIME NOT NULL,
+  UNIQUE KEY uk_shipment_receipts_shipment_batch (shipment_id, batch_no),
+  INDEX idx_shipment_receipts_shipment_id (shipment_id),
+  INDEX idx_shipment_receipts_batch_no (batch_no)
+);
+
+CREATE TABLE shipment_receipt_items (
+  id VARCHAR(36) PRIMARY KEY,
+  receipt_id VARCHAR(36) NOT NULL,
+  shipment_item_id VARCHAR(36) NOT NULL,
+  sku_id VARCHAR(64) NOT NULL,
+  sku_name VARCHAR(128) NOT NULL,
+  received_quantity INT NOT NULL,
+  diff_quantity INT NOT NULL,
+  created_at DATETIME NOT NULL,
+  INDEX idx_shipment_receipt_items_receipt_id (receipt_id),
+  INDEX idx_shipment_receipt_items_item_id (shipment_item_id)
 );
 
 CREATE TABLE audit_logs (

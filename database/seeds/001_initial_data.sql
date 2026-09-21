@@ -30,7 +30,16 @@ INSERT INTO shipments (id, order_no, supplier_id, warehouse_id, status, tracking
 ('ship-3', 'SHIP-20260603-0003', 'sup-3', 'wh-north', 'IN_TRANSIT', 'TRK1003', '京东物流', DATE_ADD(NOW(), INTERVAL 1 DAY), NULL, '', NOW(), NOW()),
 ('ship-4', 'SHIP-20260604-0004', 'sup-1', 'wh-east', 'DELIVERED', 'TRK1004', '德邦快运', NOW(), NOW(), '', NOW(), NOW());
 
-INSERT INTO shipment_items (id, shipment_id, sku_id, sku_name, quantity) VALUES
-('si-1', 'ship-1', 'SKU-1000', '轴承组件', 20),
-('si-2', 'ship-2', 'SKU-1001', '包装纸箱', 60),
-('si-3', 'ship-3', 'SKU-1002', '温控芯片', 15);
+INSERT INTO shipment_items (id, shipment_id, sku_id, sku_name, quantity, received_quantity) VALUES
+('si-1', 'ship-1', 'SKU-1000', '轴承组件', 20, 0),
+('si-2', 'ship-2', 'SKU-1001', '包装纸箱', 60, 0),
+('si-3', 'ship-3', 'SKU-1002', '温控芯片', 15, 0),
+('si-4', 'ship-4', 'SKU-1003', '防潮薄膜', 30, 30),
+('si-5', 'ship-4', 'SKU-1013', '包装纸箱', 24, 24);
+
+INSERT INTO shipment_receipts (id, shipment_id, batch_no, total_received_quantity, operator, created_at) VALUES
+('sr-1', 'ship-4', 'BATCH-0004-INIT', 54, '仓库经理', NOW());
+
+INSERT INTO shipment_receipt_items (id, receipt_id, shipment_item_id, sku_id, sku_name, received_quantity, diff_quantity, created_at) VALUES
+('sri-1', 'sr-1', 'si-4', 'SKU-1003', '防潮薄膜', 30, 0, NOW()),
+('sri-2', 'sr-1', 'si-5', 'SKU-1013', '包装纸箱', 24, 0, NOW());

@@ -33,14 +33,28 @@ export class InventoryService {
     return inventory;
   }
 
-  inbound(payload: { warehouseId: string; skuId: string; skuName: string; quantity: number }, user?: User) {
+  inbound(payload: { warehouseId: string; skuId: string; skuName: string; quantity: number; batchNo?: string; sourceOrderNo?: string }, user?: User) {
     assertRequired(payload.warehouseId, '仓库');
     assertRequired(payload.skuId, 'SKU');
     assertPositiveInteger(Number(payload.quantity), '入库数量');
     const inventory = this.findOrCreate(payload.warehouseId, payload.skuId, payload.skuName);
+    const before = inventory.quantity;
     inventory.quantity += Number(payload.quantity);
     this.refresh(inventory);
-    auditService.record({ action: 'UPDATE', module: 'INVENTORY', targetId: inventory.id, targetName: inventory.skuId, detail: { type: 'INBOUND', quantity: payload.quantity } }, user);
+    auditService.record({
+      action: 'UPDATE',
+      module: 'INVENTORY',
+      targetId: inventory.id,
+      targetName: inventory.skuId,
+      detail: {
+        type: 'INBOUND',
+        quantity: payload.quantity,
+        before,
+        after: inventory.quantity,
+        batchNo: payload.batchNo,
+        sourceOrderNo: payload.sourceOrderNo,
+      },
+    }, user);
     return inventory;
   }
 

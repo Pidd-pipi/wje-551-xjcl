@@ -10,5 +10,6 @@ shipmentsRoutes.get('/:id', requirePermission(PERMISSIONS.SHIPMENT_READ), (req, 
 shipmentsRoutes.post('/:id/ship', requirePermission(PERMISSIONS.SHIPMENT_WRITE), (req, res) => shipmentsController.ship(req, res));
 shipmentsRoutes.post('/:id/transit', requirePermission(PERMISSIONS.SHIPMENT_WRITE), (req, res) => shipmentsController.transit(req, res));
 shipmentsRoutes.post('/:id/receive', requirePermission(PERMISSIONS.SHIPMENT_RECEIVE), (req, res) => shipmentsController.receive(req, res));
+shipmentsRoutes.get('/:id/pending-summary', requirePermission(PERMISSIONS.SHIPMENT_READ), (req, res) => shipmentsController.pendingSummary(req, res));
 shipmentsRoutes.post('/:id/exception', requirePermission(PERMISSIONS.SHIPMENT_WRITE), (req, res) => shipmentsController.exception(req, res));
 shipmentsRoutes.post('/:id/cancel', requirePermission(PERMISSIONS.SHIPMENT_WRITE), (req, res) => shipmentsController.cancel(req, res));

@@ -60,6 +60,43 @@ export interface ShipmentItem {
   skuId: string;
   skuName: string;
   quantity: number;
+  receivedQuantity: number;
+}
+
+export interface ShipmentReceiptItem {
+  id: string;
+  receiptId: string;
+  shipmentItemId: string;
+  skuId: string;
+  skuName: string;
+  receivedQuantity: number;
+  diffQuantity: number;
+  createdAt: string;
+}
+
+export interface ShipmentReceipt {
+  id: string;
+  shipmentId: string;
+  batchNo: string;
+  totalReceivedQuantity: number;
+  operator: string;
+  items: ShipmentReceiptItem[];
+  createdAt: string;
+}
+
+export interface ShipmentPendingSummary {
+  totalPendingQuantity: number;
+  receivedQuantity: number;
+  originalQuantity: number;
+  items: Array<{
+    shipmentItemId: string;
+    skuId: string;
+    skuName: string;
+    originalQuantity: number;
+    receivedQuantity: number;
+    pendingQuantity: number;
+    diffQuantity: number;
+  }>;
 }
 
 export interface Shipment {
@@ -74,6 +111,7 @@ export interface Shipment {
   actualArrival?: string;
   remark: string;
   items: ShipmentItem[];
+  receipts: ShipmentReceipt[];
   timeline: TimelineEvent[];
   createdAt: string;
   updatedAt: string;
